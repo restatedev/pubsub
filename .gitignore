@@ -1,0 +1,16 @@
+node_modules/*
+dist/*
+
+src/generated/*
+buf.lock
+
+.idea
+tsconfig.tsbuildinfo
+
+packages/*/node_modules/*
+packages/*/dist/*
+packages/*/src/generated/*
+packages/*/buf.lock
+
+restate-data
+.DS_Store

@@ -1,0 +1,22 @@
+{
+  "name": "tests",
+  "description": "pubsub tests",
+  "license": "MIT",
+  "author": "Restate developers",
+  "email": "code@restate.dev",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf dist && rm tsconfig.tsbuildinfo || true",
+    "build": "tsc -b",
+    "test": "vitest run",
+    "dev": "pnpm -w test:watch --project=tests",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@restatedev/restate-sdk": "catalog:",
+    "@restatedev/restate-sdk-clients": "catalog:",
+    "@restatedev/pubsub": "workspace:*",
+    "@restatedev/restate-sdk-testcontainers": "catalog:"
+  }
+}

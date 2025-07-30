@@ -1,0 +1,12 @@
+packages:
+  - packages/*
+
+catalog:
+  "@restatedev/restate-sdk": ^1.7.0
+  "@restatedev/restate-sdk-clients": ^1.7.0
+  "@restatedev/restate-sdk-zod": ^1.7.0
+  "@restatedev/restate-sdk-testcontainers": ^1.7.0
+
+onlyBuiltDependencies:
+  - cpu-features
+  - esbuild
