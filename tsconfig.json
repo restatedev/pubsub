@@ -1,9 +1,8 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/restate-xstate" },
-    { "path": "packages/restate-xstate-test" },
-    { "path": "packages/tests" },
-    { "path": "packages/examples" }
+    { "path": "packages/pubsub" },
+    { "path": "packages/pubsub-client" },
+    { "path": "packages/tests" }
   ]
 }

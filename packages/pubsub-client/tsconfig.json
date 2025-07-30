@@ -3,11 +3,11 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
+    "declaration": true,
     "types": ["node"],
     "lib": ["es2022"]
   },
-  "references": [
-    { "path": "../pubsub" }
-  ],
-  "include": ["src"]
+  "references": [{ "path": "../pubsub" }],
+  "include": ["src"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/test/**"]
 }

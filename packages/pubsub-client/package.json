@@ -1,5 +1,5 @@
 {
-  "name": "@restatedev/pubsub",
+  "name": "@restatedev/pubsub-client",
   "version": "0.1.0",
   "description": "A PubSub built on Restate",
   "license": "MIT",
@@ -22,12 +22,14 @@
     "access": "public"
   },
   "dependencies": {
-    "zod": "catalog:"
+    "@restatedev/restate-sdk-clients": "catalog:"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@restatedev/pubsub": "workspace:^",
+    "@restatedev/restate-sdk-testcontainers": "catalog:"
+  },
   "peerDependencies": {
-    "@restatedev/restate-sdk": "catalog:",
-    "@restatedev/restate-sdk-zod": "catalog:"
+    "@restatedev/pubsub": "catalog:"
   },
   "files": [
     "dist",

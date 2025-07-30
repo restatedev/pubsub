@@ -1,11 +1,11 @@
 packages:
-  - packages/*
+  - "packages/**"
 
 catalog:
-  '@restatedev/restate-sdk': ^1.7.3
-  '@restatedev/restate-sdk-clients': ^1.7.3
-  '@restatedev/restate-sdk-testcontainers': ^1.7.3
-  '@restatedev/restate-sdk-zod': ^1.7.3
+  "@restatedev/restate-sdk": ^1.7.3
+  "@restatedev/restate-sdk-clients": ^1.7.3
+  "@restatedev/restate-sdk-testcontainers": ^1.7.3
+  "@restatedev/restate-sdk-zod": ^1.7.3
   zod: ^3.25.76
 
 onlyBuiltDependencies:

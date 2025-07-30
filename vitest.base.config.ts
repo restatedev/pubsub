@@ -16,26 +16,22 @@ export const baseConfig = defineConfig({
   ...(isWatch && {
     resolve: {
       alias: {
-        "@restatedev/xstate/promise": path.resolve(
+        "@restatedev/pubsub": path.resolve(
           __dirname,
-          "./packages/restate-xstate/src/promise.ts",
+          "./packages/pubsub/src/index.ts",
         ),
-        "@restatedev/xstate": path.resolve(
+        "@restatedev/pubsub-client": path.resolve(
           __dirname,
-          "./packages/restate-xstate/src/index.ts",
-        ),
-        "@restatedev/xstate-test": path.resolve(
-          __dirname,
-          "./packages/restate-xstate-test/src/index.ts",
+          "./packages/pubsub-client/src/index.ts",
         ),
       },
       preserveSymlinks: true,
     },
     optimizeDeps: {
       exclude: [
-        "@restatedev/xstate",
-        "@restatedev/xstate/promise",
-        "@restatedev/xstate-test",
+        "@restatedev/pubsub",
+        "@restatedev/pubsub-client",
+        "@restatedev/test",
       ],
     },
   }),
