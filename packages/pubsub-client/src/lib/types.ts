@@ -23,15 +23,47 @@
  */
 import type { Duration } from "@restatedev/restate-sdk-clients";
 
+/**
+ * Types for creating a pubsub client.
+ * These types define the options required to create a pubsub client
+ * and the options for pulling messages from a pubsub topic.
+ */
 export type CreatePubsubClientOptionsV1 = {
+  /**
+   * The name of the pubsub virtual object.
+   */
   name: string;
+  /**
+   *  Restate ingress URL for the pubsub service.
+   */
   ingressUrl: string;
+  /**
+   * Optional headers to include in requests.
+   */
   headers?: Record<string, string>;
+  /**
+   * Optional interval for pulling messages.
+   * Defaults to 1 second if not provided.
+   */
   pullInterval?: Duration;
 };
 
+/**
+ * Options for pulling messages from a pubsub topic.
+ */
 export type PullOptions = {
+  /**
+   * The topic to pull messages from.
+   */
   topic: string;
-  signal?: AbortSignal;
+
+  /**
+   * Optional offset to start pulling messages from.
+   * If not provided, messages will be pulled from the latest offset.
+   */
   offset?: number;
+  /**
+   * Optional signal to abort the pull operation.
+   */
+  signal?: AbortSignal;
 };

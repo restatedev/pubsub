@@ -35,6 +35,12 @@ import {
 
 const handler = restate.handlers.object;
 
+/**
+ * Create a pubsub object.
+ * @param name The name of the pubsub object to create.
+ * @param options The options for the pubsub object.
+ * @returns The created pubsub object.
+ */
 export function createPubsubObject<P extends string>(
   name: P,
   options?: PubsubObjectOptions,
@@ -110,6 +116,12 @@ export function createPubsubObject<P extends string>(
   });
 }
 
+/**
+ * Create a publisher for a specific pubsub object.
+ *
+ * @param name The name of the pubsub object to create a publisher for.
+ * @returns A function that publishes messages to the specified pubsub object.
+ */
 export function createPubsubPublisher(name: string) {
   return (ctx: restate.Context, topic: string, message: unknown) => {
     ctx.objectSendClient<PubsubApiV1>({ name }, topic).publish(message);

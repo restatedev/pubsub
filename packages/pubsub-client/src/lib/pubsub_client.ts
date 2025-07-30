@@ -25,10 +25,49 @@ import * as clients from "@restatedev/restate-sdk-clients";
 import type { PubsubApiV1 } from "@restatedev/pubsub";
 import type { CreatePubsubClientOptionsV1, PullOptions } from "./types.js";
 
+/**
+ * Creates a pubsub client for interacting with a pubsub service.
+ *
+ * @param pubsubOptions The options for creating the pubsub client.
+ * @param pubsubOptions.name The name of the pubsub client.
+ * @param pubsubOptions.ingressUrl The URL for the pubsub ingress.
+ * @param pubsubOptions.headers Optional headers to include in requests.
+ * @param pubsubOptions.pullInterval Optional interval for pulling messages.
+ *                                  Defaults to 1 second if not provided.
+ * @returns A pubsub client instance.
+ */
 export function createPubsubClient(pubsubOptions: CreatePubsubClientOptionsV1) {
   return {
+    /**
+     * Pull messages from the pubsub topic.
+     * @param opts The options for pulling messages.
+     * @returns A stream of messages.
+     */
     pull: (opts: PullOptions) => pullMessages(pubsubOptions, opts),
+
+    /**
+     * Create a Server-Sent Events (SSE) stream for the pubsub topic.
+     * @param opts The options for the SSE stream.
+     * @returns A ReadableStream that emits messages as SSE events.
+     */
     sse: (opts: PullOptions) => sse(pubsubOptions, opts),
+
+    /**
+     * Publish a message to the pubsub topic.
+     * @param topic The topic to publish to.
+     * @param message The message to publish.
+     * @param idempotencyKey An optional idempotency key for the message.
+     * @returns A promise that resolves when the message is published.
+     */
+    publish: (topic: string, message: unknown, idempotencyKey?: string) => {
+      const ingress = clients.connect({
+        url: pubsubOptions.ingressUrl,
+        headers: pubsubOptions.headers,
+      });
+      return ingress
+        .objectSendClient<PubsubApiV1>({ name: pubsubOptions.name }, topic)
+        .publish(message, clients.rpc.sendOpts({ idempotencyKey }));
+    },
   };
 }
 
