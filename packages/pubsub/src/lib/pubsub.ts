@@ -47,6 +47,65 @@ export function createPubsubObject<P extends string>(
 ): restate.VirtualObjectDefinition<P, PubsubApiV1> {
   const pullTimeout = options?.pullTimeout ?? { seconds: 30 };
 
+  const pull = async (
+    ctx: restate.ObjectSharedContext<PubSubState>,
+    { offset }: PullRequest,
+  ) => {
+    const messages = (await ctx.get("messages")) ?? [];
+    if (offset < messages.length) {
+      return {
+        messages: messages.slice(offset),
+        nextOffset: messages.length,
+      };
+    }
+    const { id, promise } = ctx.awakeable<Notification>();
+    ctx
+      .objectSendClient<PubsubApiV1>({ name }, ctx.key)
+      .subscribe({ offset, id });
+    const { newMessages, newOffset } = await promise.orTimeout(pullTimeout);
+    return {
+      messages: newMessages,
+      nextOffset: newOffset,
+    };
+  };
+
+  const publish = async (
+    ctx: restate.ObjectContext<PubSubState>,
+    message: unknown,
+  ) => {
+    const messages = (await ctx.get("messages")) ?? [];
+    messages.push(message);
+    ctx.set("messages", messages);
+
+    const subscriptions = (await ctx.get("subscription")) ?? [];
+    for (const { id, offset } of subscriptions) {
+      const notification = {
+        newOffset: messages.length,
+        newMessages: messages.slice(offset),
+      };
+      ctx.resolveAwakeable(id, notification);
+    }
+    ctx.clear("subscription");
+  };
+
+  const subscribe = async (
+    ctx: restate.ObjectContext<PubSubState>,
+    subscription: Subscription,
+  ) => {
+    const messages = (await ctx.get("messages")) ?? [];
+    if (subscription.offset < messages.length) {
+      const notification = {
+        newOffset: messages.length,
+        newMessages: messages.slice(subscription.offset),
+      };
+      ctx.resolveAwakeable(subscription.id, notification);
+      return;
+    }
+    const sub = (await ctx.get("subscription")) ?? [];
+    sub.push(subscription);
+    ctx.set("subscription", sub);
+  };
+
   return restate.object({
     name,
     handlers: {
@@ -55,63 +114,11 @@ export function createPubsubObject<P extends string>(
           input: serde.zod(PullRequest),
           output: serde.zod(PullResponse),
         },
-        async (ctx: restate.ObjectSharedContext<PubSubState>, { offset }) => {
-          const messages = (await ctx.get("messages")) ?? [];
-          if (offset < messages.length) {
-            return {
-              messages: messages.slice(offset),
-              nextOffset: messages.length,
-            };
-          }
-          const { id, promise } = ctx.awakeable<Notification>();
-          ctx
-            .objectSendClient<PubsubApiV1>({ name }, ctx.key)
-            .subscribe({ offset, id });
-          const { newMessages, newOffset } =
-            await promise.orTimeout(pullTimeout);
-          return {
-            messages: newMessages,
-            nextOffset: newOffset,
-          };
-        },
+        pull,
       ),
 
-      publish: async (
-        ctx: restate.ObjectContext<PubSubState>,
-        message: unknown,
-      ) => {
-        const messages = (await ctx.get("messages")) ?? [];
-        messages.push(message);
-        ctx.set("messages", messages);
-
-        const subscriptions = (await ctx.get("subscription")) ?? [];
-        for (const { id, offset } of subscriptions) {
-          const notification = {
-            newOffset: messages.length,
-            newMessages: messages.slice(offset),
-          };
-          ctx.resolveAwakeable(id, notification);
-        }
-        ctx.clear("subscription");
-      },
-
-      subscribe: async (
-        ctx: restate.ObjectContext<PubSubState>,
-        subscription: Subscription,
-      ) => {
-        const messages = (await ctx.get("messages")) ?? [];
-        if (subscription.offset < messages.length) {
-          const notification = {
-            newOffset: messages.length,
-            newMessages: messages.slice(subscription.offset),
-          };
-          ctx.resolveAwakeable(subscription.id, notification);
-          return;
-        }
-        const sub = (await ctx.get("subscription")) ?? [];
-        sub.push(subscription);
-        ctx.set("subscription", sub);
-      },
+      publish,
+      subscribe,
     } satisfies PubsubApiV1,
   });
 }
