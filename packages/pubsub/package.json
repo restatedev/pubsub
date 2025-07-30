@@ -15,19 +15,23 @@
     "clean": "rm -rf dist && rm tsconfig.tsbuildinfo || true",
     "exports-check": "attw --pack .",
     "lint": "eslint",
-    "check-forgotten-exports": "api-extractor run --local && api-extractor run --local --config ./api-extractor.promise.json",
+    "check-forgotten-exports": "api-extractor run --local",
     "prepublishOnly": "pnpm -w verify"
   },
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {},
+  "dependencies": {
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "@restatedev/restate-sdk-testcontainers": "catalog:",
     "@restatedev/restate-sdk-clients": "catalog:"
   },
   "peerDependencies": {
-    "@restatedev/restate-sdk": "catalog:"
+    "@restatedev/restate-sdk": "catalog:",
+    "@restatedev/restate-sdk-clients": "catalog:",
+    "@restatedev/restate-sdk-zod": "catalog:"
   },
   "files": [
     "dist",
@@ -48,10 +52,6 @@
     ".": {
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    },
-    "./promise": {
-      "import": "./dist/promise.js",
-      "require": "./dist/promise.cjs"
     },
     "./package.json": "./package.json"
   }

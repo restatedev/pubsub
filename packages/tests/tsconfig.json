@@ -7,8 +7,7 @@
     "lib": ["es2022"]
   },
   "references": [
-    { "path": "../restate-xstate" },
-    { "path": "../restate-xstate-test" }
+    { "path": "../pubsub" }
   ],
   "include": ["src"]
 }

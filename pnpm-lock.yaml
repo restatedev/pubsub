@@ -7,14 +7,20 @@ settings:
 catalogs:
   default:
     '@restatedev/restate-sdk':
-      specifier: ^1.7.0
+      specifier: ^1.7.3
       version: 1.7.3
     '@restatedev/restate-sdk-clients':
-      specifier: ^1.7.0
+      specifier: ^1.7.3
       version: 1.7.3
     '@restatedev/restate-sdk-testcontainers':
-      specifier: ^1.7.0
+      specifier: ^1.7.3
       version: 1.7.3
+    '@restatedev/restate-sdk-zod':
+      specifier: ^1.7.3
+      version: 1.7.3
+    zod:
+      specifier: ^3.25.76
+      version: 3.25.76
 
 importers:
 
@@ -83,6 +89,12 @@ importers:
       '@restatedev/restate-sdk':
         specifier: 'catalog:'
         version: 1.7.3
+      '@restatedev/restate-sdk-zod':
+        specifier: 'catalog:'
+        version: 1.7.3
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
       '@restatedev/restate-sdk-clients':
         specifier: 'catalog:'
@@ -590,6 +602,10 @@ packages:
 
   '@restatedev/restate-sdk-testcontainers@1.7.3':
     resolution: {integrity: sha512-oup5onnxoJmYwAwi/tdh1ydiZemGIrjBDo8OIyKq7zOSG9ZXa7v54OG1v63rid894s4hedV0+ouO4jDDckn42A==}
+    engines: {node: '>= 18.13'}
+
+  '@restatedev/restate-sdk-zod@1.7.3':
+    resolution: {integrity: sha512-YclomSQjFAG7nP0gYImrk29NKwbJQ6cSlgoCb+Hd9HK0MX5Euc/BM6RAAKVmWQCplp72CB51mz9t+pwvD2HEAw==}
     engines: {node: '>= 18.13'}
 
   '@restatedev/restate-sdk@1.7.3':
@@ -2713,6 +2729,14 @@ packages:
     resolution: {integrity: sha512-zK7YHHz4ZXpW89AHXUPbQVGKI7uvkd3hzusTdotCg1UxyaVtg0zFJSTfW/Dq5f7OBBVnq6cZIaC8Ti4hb6dtCA==}
     engines: {node: '>= 14'}
 
+  zod-to-json-schema@3.24.3:
+    resolution: {integrity: sha512-HIAfWdYIt1sssHfYZFCXp4rU1w2r8hVVXYIlmoa0r0gABLs5di3RCqPU5DDROogVz1pAdYBaz7HK5n9pSUNs3A==}
+    peerDependencies:
+      zod: ^3.24.1
+
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
@@ -3273,6 +3297,11 @@ snapshots:
     transitivePeerDependencies:
       - bare-buffer
       - supports-color
+
+  '@restatedev/restate-sdk-zod@1.7.3':
+    dependencies:
+      zod: 3.25.76
+      zod-to-json-schema: 3.24.3(zod@3.25.76)
 
   '@restatedev/restate-sdk@1.7.3':
     dependencies:
@@ -5600,5 +5629,11 @@ snapshots:
       archiver-utils: 5.0.2
       compress-commons: 6.0.2
       readable-stream: 4.7.0
+
+  zod-to-json-schema@3.24.3(zod@3.25.76):
+    dependencies:
+      zod: 3.25.76
+
+  zod@3.25.76: {}
 
   zwitch@2.0.4: {}
