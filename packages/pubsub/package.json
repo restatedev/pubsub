@@ -1,6 +1,6 @@
 {
   "name": "@restatedev/pubsub",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A PubSub built on Restate",
   "license": "MIT",
   "author": "Restate developers",
