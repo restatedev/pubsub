@@ -1,0 +1,18 @@
+{
+  "name": "@restatedev/pubsub-types",
+  "description": "PubSub types",
+  "license": "MIT",
+  "author": "Restate developers",
+  "email": "code@restate.dev",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf dist && rm tsconfig.tsbuildinfo || true",
+    "build": "tsc -b",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "zod": "catalog:",
+    "@restatedev/restate-sdk": "catalog:"
+  }
+}

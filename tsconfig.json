@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/pubsub" },
     { "path": "packages/pubsub-client" },
-    { "path": "packages/tests" }
+    { "path": "packages/tests" },
+    { "path": "packages/types" }
   ]
 }

@@ -3,14 +3,9 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "declaration": true,
     "types": ["node"],
-    "lib": ["es2022"],
-    "paths": {
-      "@restatedev/pubsub-types": ["../types/src/index.ts"]
-    }
+    "lib": ["es2022"]
   },
-  "references": [{ "path": "../types" }],
   "include": ["src"],
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/test/**"]
 }

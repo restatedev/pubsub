@@ -21,13 +21,14 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "zod": "catalog:"
+  "dependencies": {},
+  "devDependencies": {
+    "@restatedev/pubsub-types": "workspace:^"
   },
-  "devDependencies": {},
   "peerDependencies": {
     "@restatedev/restate-sdk": "catalog:",
-    "@restatedev/restate-sdk-zod": "catalog:"
+    "@restatedev/restate-sdk-zod": "catalog:",
+    "zod": "catalog:"
   },
   "files": [
     "dist",

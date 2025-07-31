@@ -21,15 +21,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "@restatedev/restate-sdk-clients": "catalog:"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@restatedev/pubsub": "workspace:^",
-    "@restatedev/restate-sdk-testcontainers": "catalog:"
+    "@restatedev/restate-sdk-testcontainers": "catalog:",
+    "@restatedev/pubsub-types": "workspace:^"
   },
   "peerDependencies": {
-    "@restatedev/pubsub": "catalog:"
+    "@restatedev/restate-sdk-clients": "catalog:"
   },
   "files": [
     "dist",
