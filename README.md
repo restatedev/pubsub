@@ -1,6 +1,6 @@
 ## 🚀 Quick Start
 
-### Create a new project 
+### Create a new project
 
 ```sh
 bun init .
@@ -9,9 +9,10 @@ bun add "@restatedev/restate-sdk"
 ```
 
 ### Replace the content of index.ts
+
 ```ts
-import {createPubsubObject} from "@restatedev/pubsub";
-import {serve} from "@restatedev/restate-sdk";
+import { createPubsubObject } from "@restatedev/pubsub";
+import { serve } from "@restatedev/restate-sdk";
 
 const pubsub = createPubsubObject("sessions", {});
 
@@ -21,11 +22,12 @@ serve({
 ```
 
 ### Start the service
+
 ```sh
 bun run index.ts
 ```
-### After successfully registering this with the restate server, you can produce and consume from any topic, by interacting
-with the 'sessions' virtual object.
+
+### After successfully registering this with the restate server, you can produce and consume from any topic, by interacting with the 'sessions' virtual object.
 
 For example:
 
@@ -37,7 +39,7 @@ curl --request POST \
   --data '"hello world"'
 ```
 
-Or pull for new messages 
+Or pull for new messages
 
 ```sh
 curl --request POST \
@@ -66,17 +68,16 @@ const pubsub = createPubsubClient({
 Bun.serve({
   port: 3000,
   fetch(request) {
-    const stream = pubsub.sse({ topic: "123" })
+    const stream = pubsub.sse({ topic: "123" });
     return new Response(stream, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
+        Connection: "keep-alive",
       },
     });
   },
 });
-
 ```
 
 And then:
