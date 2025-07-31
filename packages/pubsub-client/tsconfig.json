@@ -5,9 +5,12 @@
     "rootDir": "src",
     "declaration": true,
     "types": ["node"],
-    "lib": ["es2022"]
+    "lib": ["es2022"],
+    "paths": {
+      "@restatedev/pubsub-types": ["../types/src/index.ts"]
+    }
   },
-  "references": [{ "path": "../pubsub" }],
+  "references": [{ "path": "../pubsub" }, { "path": "../types" }],
   "include": ["src"],
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/test/**"]
 }

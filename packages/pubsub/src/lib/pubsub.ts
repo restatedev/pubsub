@@ -31,7 +31,7 @@ import {
   PullRequest,
   PullResponse,
   type PubsubObjectOptions,
-} from "./types.js";
+} from "@restatedev/pubsub-types";
 
 const handler = restate.handlers.object;
 

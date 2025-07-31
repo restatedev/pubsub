@@ -22,7 +22,7 @@
  *   SOFTWARE
  */
 import * as clients from "@restatedev/restate-sdk-clients";
-import type { PubsubApiV1 } from "@restatedev/pubsub";
+import type { PubsubApiV1 } from "@restatedev/pubsub-types";
 import type { CreatePubsubClientOptionsV1, PullOptions } from "./types.js";
 
 /**

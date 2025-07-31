@@ -102,12 +102,18 @@ importers:
         specifier: 'catalog:'
         version: 1.7.3
     devDependencies:
-      '@restatedev/pubsub':
-        specifier: workspace:^
-        version: link:../pubsub
       '@restatedev/restate-sdk-testcontainers':
         specifier: 'catalog:'
         version: 1.7.3
+
+  packages/types:
+    dependencies:
+      '@restatedev/restate-sdk':
+        specifier: 'catalog:'
+        version: 1.7.3
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
 
 packages:
 
