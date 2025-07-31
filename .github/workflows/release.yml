@@ -35,8 +35,18 @@ jobs:
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
+      - name: Set combined output (need-to-release)
+        id: set_output
+        run: |
+          EXISTS="${{ steps.check_tag.outputs.exists }}"
+          VERSION="${{ steps.get_version.outputs.version }}"
+          if [[ "$EXISTS" == "false" && "$VERSION" != "0.0.0" ]]; then
+            echo "need-to-release=true" >> $GITHUB_OUTPUT
+          else
+            echo "need-to-release=false" >> $GITHUB_OUTPUT
+          fi
     outputs:
-      need-to-release: ${{ steps.check_tag.outputs.exists == 'false' }}
+      need-to-release: ${{ steps.set_output.outputs.need-to-release }}
       version: ${{ steps.get_version.outputs.version }}
   release:
     runs-on: ubuntu-latest
