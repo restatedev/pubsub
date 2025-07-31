@@ -7,7 +7,7 @@
   "email": "code@restate.dev",
   "type": "module",
   "scripts": {
-    "prebuild": "tsc --noEmit",
+    "prebuild": "tsc -b && rm -rf dist",
     "build": "tsdown",
     "dev": "tsdown --watch",
     "test": "vitest --passWithNoTests run",
@@ -22,9 +22,7 @@
     "access": "public"
   },
   "dependencies": {},
-  "devDependencies": {
-    "@restatedev/pubsub-types": "workspace:^"
-  },
+  "devDependencies": {},
   "peerDependencies": {
     "@restatedev/restate-sdk": "catalog:",
     "@restatedev/restate-sdk-zod": "catalog:",
