@@ -12,9 +12,16 @@ export interface Notification {
   newMessages: any[];
 }
 
+type Metadata = {
+  head: number;
+  /// Excluded
+  tail: number;
+};
+
 export interface PubSubState {
-  messages: any[];
+  messagesMetadata: Metadata;
   subscription: Subscription[];
+  [key: Exclude<string, 'messagesMetadata' | 'subscription'>]: any;
 }
 
 export const PullRequest = z.object({
