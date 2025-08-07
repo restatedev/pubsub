@@ -4,6 +4,7 @@
     { "path": "packages/pubsub" },
     { "path": "packages/pubsub-client" },
     { "path": "packages/tests" },
+    { "path": "packages/examples" },
     { "path": "packages/types" }
   ]
 }
