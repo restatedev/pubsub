@@ -1,0 +1,19 @@
+{
+  "name": "examples",
+  "description": "Restate PubSub examples",
+  "license": "MIT",
+  "author": "Restate developers",
+  "email": "code@restate.dev",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf dist && rm tsconfig.tsbuildinfo || true",
+    "build": "tsc -b",
+    "lint": "eslint",
+    "dev": "tsx watch --tsconfig ./tsconfig.dev.json ./src/app.ts "
+  },
+  "dependencies": {
+    "@restatedev/restate-sdk": "catalog:",
+    "@restatedev/pubsub": "workspace:*"
+  }
+}

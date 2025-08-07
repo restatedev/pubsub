@@ -25,7 +25,6 @@ import * as restate from "@restatedev/restate-sdk";
 import { serde } from "@restatedev/restate-sdk-zod";
 import {
   type PubsubApiV1,
-  type PubSubState,
   type Notification,
   type Subscription,
   PullRequest,
@@ -34,34 +33,47 @@ import {
 } from "@restatedev/pubsub-types";
 import { RestatePromise, TerminalError } from "@restatedev/restate-sdk";
 
-const handler = restate.handlers.object;
-
 type Metadata = {
   head: number;
+  /// Excluded
   tail: number;
 };
 
-function defaultMetadata(): Metadata{
-  return {head: 0, tail: 0};
+export interface PubSubState {
+  messagesMetadata: Metadata;
+  subscription: Subscription[];
+  [key: Exclude<string, "messagesMetadata" | "subscription">]: unknown;
 }
 
-async function loadMessagesInRange(    ctx: restate.ObjectSharedContext<PubSubState>, fromIncluded: number, toExcluded: number): Promise<unknown[]> {
+const handler = restate.handlers.object;
+
+function defaultMetadata(): Metadata {
+  return { head: 0, tail: 0 };
+}
+
+async function loadMessagesInRange(
+  ctx: restate.ObjectSharedContext<PubSubState>,
+  fromIncluded: number,
+  toExcluded: number,
+): Promise<unknown[]> {
   if (fromIncluded == toExcluded) {
-return [];
+    return [];
   }
 
   const promises = [];
   for (let i = fromIncluded; i < toExcluded; i++) {
     promises.push(
-      (ctx.get(`m_${i.toString()}`) as RestatePromise<unknown>).map((value, failure) => {
-        if (failure) {
-          throw failure;
-        }
-        if (value === undefined) {
-          throw new TerminalError("Value is unexpected to be undefined");
-        }
-        return value;
-      })
+      (ctx.get(`m_${i.toString()}`) as RestatePromise<unknown>).map(
+        (value, failure) => {
+          if (failure) {
+            throw failure;
+          }
+          if (value === undefined) {
+            throw new TerminalError("Value is unexpected to be undefined");
+          }
+          return value;
+        },
+      ),
     );
   }
 
@@ -88,7 +100,9 @@ export function createPubsubObject<P extends string>(
 
     if (offset < metadata.head) {
       // Offset before the head
-      throw new TerminalError(`Offset ${offset.toString()} is lower than the head ${metadata.head.toString()}`);
+      throw new TerminalError(
+        `Offset ${offset.toString()} is lower than the head ${metadata.head.toString()}`,
+      );
     }
 
     if (offset < metadata.tail) {
@@ -144,7 +158,10 @@ export function createPubsubObject<P extends string>(
 
     if (subscription.offset < metadata.head) {
       // Offset before the head
-      ctx.rejectAwakeable(subscription.id,`Offset ${subscription.offset.toString()} is lower than the head ${metadata.head.toString()}`);
+      ctx.rejectAwakeable(
+        subscription.id,
+        `Offset ${subscription.offset.toString()} is lower than the head ${metadata.head.toString()}`,
+      );
       return;
     }
 
@@ -152,7 +169,11 @@ export function createPubsubObject<P extends string>(
       // Subscription offset before the tail, let's return messages back
       const notification = {
         newOffset: metadata.tail,
-        newMessages: await loadMessagesInRange(ctx, subscription.offset, metadata.tail),
+        newMessages: await loadMessagesInRange(
+          ctx,
+          subscription.offset,
+          metadata.tail,
+        ),
       };
       ctx.resolveAwakeable(subscription.id, notification);
       return;
@@ -180,7 +201,7 @@ export function createPubsubObject<P extends string>(
     } satisfies PubsubApiV1,
     options: {
       enableLazyState: true,
-    }
+    },
   });
 }
 

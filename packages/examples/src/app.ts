@@ -14,6 +14,6 @@ import { serve } from "@restatedev/restate-sdk";
 
 const pubsub = createPubsubObject("sessions", {});
 
-serve({
+void serve({
   services: [pubsub],
 });
