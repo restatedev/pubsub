@@ -98,6 +98,20 @@ export function createPubsubObject<P extends string>(
   ) => {
     const metadata = (await ctx.get("messagesMetadata")) ?? defaultMetadata();
 
+    // If offset is not provided, always wait for new messages from the current tail
+    if (offset === undefined) {
+      const { id, promise } = ctx.awakeable<Notification>();
+      ctx
+        .objectSendClient<PubsubApiV1>({ name }, ctx.key)
+        .subscribe({ offset: metadata.tail, id });
+      const { newMessages, newOffset } = await promise.orTimeout(pullTimeout);
+      return {
+        messages: newMessages,
+        nextOffset: newOffset,
+      };
+    }
+
+    // Handle explicit offset
     if (offset < metadata.head) {
       // Offset before the head
       throw new TerminalError(

@@ -286,4 +286,88 @@ describe("Pubsub", () => {
       expect(result.value).toBe("new-message");
     },
   );
+
+  it.concurrent(
+    "Pull without offset should start from tail (latest offset)",
+    { timeout: 10_000 },
+    async () => {
+      const topic = randomUUID();
+
+      const client = createPubsubClient({
+        ingressUrl: restateTestEnvironment.baseUrl(),
+        name: PUBSUB_OBJECT_NAME,
+      });
+
+      // Publish some messages first
+      await client.publish(topic, "old-message-1", "key-1");
+      await client.publish(topic, "old-message-2", "key-2");
+
+      // Start pulling without offset - should wait for new messages
+      const pullIterator = client.pull({ topic });
+      let pullPromise = pullIterator.next();
+
+      // Publish a new message after starting the pull
+      await client.publish(topic, "new-message", "key-3");
+
+      // Now pull until new message is found
+      while ((await pullPromise).value !== "new-message") {
+        pullPromise = pullIterator.next();
+      }
+    },
+  );
+
+  it.concurrent(
+    "Pull without offset on empty topic should wait for first message",
+    { timeout: 20_000 },
+    async () => {
+      const topic = randomUUID();
+
+      const client = createPubsubClient({
+        ingressUrl: restateTestEnvironment.baseUrl(),
+        name: PUBSUB_OBJECT_NAME,
+      });
+
+      // Start pulling without offset on empty topic
+      const pullIterator = client.pull({ topic });
+      const pullPromise = pullIterator.next();
+
+      // Publish the first message
+      await client.publish(topic, "first-message", "key-1");
+
+      // Should receive the first message
+      const result = await pullPromise;
+      expect(result.value).toBe("first-message");
+    },
+  );
+
+  it.concurrent(
+    "Pull without offset should continue receiving new messages",
+    { timeout: 20_000 },
+    async () => {
+      const topic = randomUUID();
+
+      const client = createPubsubClient({
+        ingressUrl: restateTestEnvironment.baseUrl(),
+        name: PUBSUB_OBJECT_NAME,
+      });
+
+      // Publish some existing messages
+      await client.publish(topic, "existing-1", "key-1");
+      await client.publish(topic, "existing-2", "key-2");
+
+      // Start pulling without offset
+      const pullIterator = client.pull({ topic });
+
+      // Publish new messages
+      await client.publish(topic, "new-1", "key-3");
+      await client.publish(topic, "new-2", "key-4");
+
+      while ((await pullIterator.next()).value !== "new-1") {
+        // Loop until new-1 is there
+      }
+
+      const result2 = await pullIterator.next();
+      expect(result2.value).toBe("new-2");
+    },
+  );
 });

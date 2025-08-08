@@ -120,7 +120,7 @@ export async function* pullMessages(
   });
   const signal = opts.signal;
   const delay = durationToMs(pubsubOptions.pullInterval ?? { seconds: 1 });
-  let offset = opts.offset ?? 0;
+  let offset = opts.offset;
   while (!(signal?.aborted ?? false)) {
     try {
       const { messages, nextOffset } = await ingress

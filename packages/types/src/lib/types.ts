@@ -13,7 +13,7 @@ export interface Notification {
 }
 
 export const PullRequest = z.object({
-  offset: z.number(),
+  offset: z.number().optional(),
 });
 
 export type PullRequest = z.infer<typeof PullRequest>;
