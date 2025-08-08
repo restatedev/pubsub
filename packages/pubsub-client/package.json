@@ -21,9 +21,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "@restatedev/pubsub-types": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@restatedev/restate-sdk-testcontainers": "catalog:"
   },

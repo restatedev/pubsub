@@ -95,9 +95,6 @@ importers:
 
   packages/pubsub:
     dependencies:
-      '@restatedev/pubsub-types':
-        specifier: workspace:*
-        version: link:../types
       '@restatedev/restate-sdk':
         specifier: 'catalog:'
         version: 1.8.1
@@ -110,9 +107,6 @@ importers:
 
   packages/pubsub-client:
     dependencies:
-      '@restatedev/pubsub-types':
-        specifier: workspace:*
-        version: link:../types
       '@restatedev/restate-sdk-clients':
         specifier: 'catalog:'
         version: 1.8.1
