@@ -18,6 +18,7 @@ import {
   createPubsubClient,
   type PubsubClientV1,
 } from "@restatedev/pubsub-client";
+import { GenericContainer } from "testcontainers";
 
 const PUBSUB_OBJECT_NAME = "pubsub";
 
@@ -28,14 +29,19 @@ describe("Pubsub", () => {
 
   // Deploy Restate and the Service endpoint once for all the tests in this suite
   beforeAll(async () => {
-    restateTestEnvironment = await RestateTestEnvironment.start({
-      services: [createPubsubObject(PUBSUB_OBJECT_NAME)],
-    });
+    restateTestEnvironment = await RestateTestEnvironment.start(
+      {
+        services: [createPubsubObject(PUBSUB_OBJECT_NAME)],
+      },
+      () =>
+        // Using the image published on ghcr.io because of the awesome quota limits from docker hub
+        new GenericContainer("ghcr.io/restatedev/restate:latest"),
+    );
     ingressClient = connect({ url: restateTestEnvironment.baseUrl() });
     client = createPubsubClient(ingressClient, {
       name: PUBSUB_OBJECT_NAME,
     });
-  }, 20_000);
+  }, 60_000);
 
   // Stop Restate and the Service endpoint
   afterAll(async () => {

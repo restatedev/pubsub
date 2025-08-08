@@ -18,6 +18,7 @@
     "@restatedev/restate-sdk-clients": "catalog:",
     "@restatedev/pubsub-client": "workspace:*",
     "@restatedev/pubsub": "workspace:*",
-    "@restatedev/restate-sdk-testcontainers": "catalog:"
+    "@restatedev/restate-sdk-testcontainers": "catalog:",
+    "testcontainers": "catalog:"
   }
 }

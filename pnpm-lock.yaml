@@ -18,6 +18,9 @@ catalogs:
     '@restatedev/restate-sdk-zod':
       specifier: ^1.8.1
       version: 1.8.1
+    testcontainers:
+      specifier: ^10.24.1
+      version: 10.28.0
     zod:
       specifier: ^3.25.76
       version: 3.25.76
@@ -132,6 +135,9 @@ importers:
       '@restatedev/restate-sdk-testcontainers':
         specifier: 'catalog:'
         version: 1.8.1
+      testcontainers:
+        specifier: 'catalog:'
+        version: 10.28.0
 
   packages/types:
     dependencies:
