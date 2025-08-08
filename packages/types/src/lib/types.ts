@@ -29,6 +29,7 @@ export interface PubsubApiV1 {
   pull: (ctx: any, req: PullRequest) => Promise<PullResponse>;
   publish: (ctx: any, message: unknown) => Promise<void>;
   subscribe: (ctx: any, subscription: Subscription) => Promise<void>;
+  truncate: (ctx: any, count: number) => Promise<void>;
 }
 
 export type PubsubObjectOptions = {

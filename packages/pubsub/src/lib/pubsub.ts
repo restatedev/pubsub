@@ -185,6 +185,50 @@ export function createPubsubObject<P extends string>(
     ctx.set("subscription", sub);
   };
 
+  const truncate = async (
+    ctx: restate.ObjectContext<PubSubState>,
+    count: number,
+  ) => {
+    const metadata = await ctx.get("messagesMetadata");
+    if (!metadata) {
+      // Nothing to do, this pubsub object is empty
+      return;
+    }
+
+    // Calculate new head position
+    const newHead = Math.min(metadata.head + count, metadata.tail);
+
+    // Update metadata with new object
+    const newMetadata = { head: newHead, tail: metadata.tail };
+    ctx.set("messagesMetadata", newMetadata);
+
+    // Clear the truncated message keys from state
+    for (let i = metadata.head; i < newHead; i++) {
+      ctx.clear(`m_${i.toString()}`);
+    }
+
+    // Reject any pending subscriptions that are now below the new head
+    const subscriptions = (await ctx.get("subscription")) ?? [];
+    const validSubscriptions = [];
+
+    for (const subscription of subscriptions) {
+      if (subscription.offset < newHead) {
+        // Reject subscriptions that are now below the head
+        ctx.rejectAwakeable(
+          subscription.id,
+          `Offset ${subscription.offset.toString()} is lower than the head ${newHead.toString()}`,
+        );
+      } else {
+        validSubscriptions.push(subscription);
+      }
+    }
+
+    // Update subscriptions list with only valid ones
+    if (validSubscriptions.length !== subscriptions.length) {
+      ctx.set("subscription", validSubscriptions);
+    }
+  };
+
   return restate.object({
     name,
     handlers: {
@@ -198,6 +242,7 @@ export function createPubsubObject<P extends string>(
 
       publish,
       subscribe,
+      truncate,
     } satisfies PubsubApiV1,
     options: {
       enableLazyState: true,

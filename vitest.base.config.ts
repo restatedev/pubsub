@@ -9,6 +9,9 @@ export const baseConfig = defineConfig({
   test: {
     globals: true,
     environment: "node",
+    env: {
+      RESTATE_LOGGING: "warn",
+    },
     projects: ["packages/*"],
     watch: isWatch,
     passWithNoTests: true,

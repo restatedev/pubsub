@@ -68,6 +68,22 @@ export function createPubsubClient(pubsubOptions: CreatePubsubClientOptionsV1) {
         .objectSendClient<PubsubApiV1>({ name: pubsubOptions.name }, topic)
         .publish(message, clients.rpc.sendOpts({ idempotencyKey }));
     },
+
+    /**
+     * Truncate messages from the head of the pubsub topic.
+     * @param topic The topic to truncate messages from.
+     * @param count The number of messages to remove from the head.
+     * @returns A promise that resolves when the truncation is complete.
+     */
+    truncate: (topic: string, count: number) => {
+      const ingress = clients.connect({
+        url: pubsubOptions.ingressUrl,
+        headers: pubsubOptions.headers,
+      });
+      return ingress
+        .objectClient<PubsubApiV1>({ name: pubsubOptions.name }, topic)
+        .truncate(count);
+    },
   };
 }
 

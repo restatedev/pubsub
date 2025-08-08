@@ -126,4 +126,164 @@ describe("Pubsub", () => {
       expect(receivedMessages).toEqual(publishedMessages);
     },
   );
+
+  it.concurrent(
+    "Basic truncate functionality",
+    { timeout: 20_000 },
+    async () => {
+      const topic = randomUUID();
+
+      const client = createPubsubClient({
+        ingressUrl: restateTestEnvironment.baseUrl(),
+        name: PUBSUB_OBJECT_NAME,
+      });
+
+      // Publish 5 messages
+      await client.publish(topic, "message-0", "key-0");
+      await client.publish(topic, "message-1", "key-1");
+      await client.publish(topic, "message-2", "key-2");
+      await client.publish(topic, "message-3", "key-3");
+      await client.publish(topic, "message-4", "key-4");
+
+      // Truncate first 2 messages
+      await client.truncate(topic, 2);
+
+      // Pull from offset 2 (new head) should work
+      const messages = [];
+      const pullIterator = client.pull({ topic, offset: 2 });
+      let messageCount = 0;
+      for await (const message of pullIterator) {
+        messages.push(message);
+        messageCount++;
+        if (messageCount >= 3) break; // Get remaining 3 messages
+      }
+
+      expect(messages).toEqual(["message-2", "message-3", "message-4"]);
+    },
+  );
+
+  it.concurrent(
+    "Subscribing from a truncated index should fail",
+    { timeout: 120_000 },
+    async () => {
+      const topic = randomUUID();
+
+      const client = createPubsubClient({
+        ingressUrl: restateTestEnvironment.baseUrl(),
+        name: PUBSUB_OBJECT_NAME,
+      });
+
+      // Publish 3 messages
+      await client.publish(topic, "message-0", "key-0");
+      await client.publish(topic, "message-1", "key-1");
+      await client.publish(topic, "message-2", "key-2");
+
+      // Truncate first 2 messages
+      await client.truncate(topic, 2);
+
+      // Try to pull from offset 0 (below new head) should fail
+      const pullIterator = client.pull({ topic, offset: 0 });
+      await expect(pullIterator.next()).rejects.toThrow(
+        "Offset 0 is lower than the head 2",
+      );
+    },
+  );
+
+  it.concurrent(
+    "Subscribing after truncation should work normally",
+    { timeout: 20_000 },
+    async () => {
+      const topic = randomUUID();
+
+      const client = createPubsubClient({
+        ingressUrl: restateTestEnvironment.baseUrl(),
+        name: PUBSUB_OBJECT_NAME,
+      });
+
+      // Publish 3 messages
+      await client.publish(topic, "message-0", "key-0");
+      await client.publish(topic, "message-1", "key-1");
+      await client.publish(topic, "message-2", "key-2");
+
+      // Truncate first message
+      await client.truncate(topic, 1);
+
+      // Subscribe from new head should work
+      const messages = [];
+      const pullIterator = client.pull({ topic, offset: 1 });
+      let messageCount = 0;
+      for await (const message of pullIterator) {
+        messages.push(message);
+        messageCount++;
+        if (messageCount >= 2) break; // Get remaining 2 messages
+      }
+
+      expect(messages).toEqual(["message-1", "message-2"]);
+    },
+  );
+
+  it.concurrent(
+    "Subscribe then truncate should reject pending subscriptions below the range",
+    { timeout: 20_000 },
+    async () => {
+      const topic = randomUUID();
+
+      const client = createPubsubClient({
+        ingressUrl: restateTestEnvironment.baseUrl(),
+        name: PUBSUB_OBJECT_NAME,
+      });
+
+      // Publish 2 messages
+      await client.publish(topic, "message-0", "key-0");
+      await client.publish(topic, "message-1", "key-1");
+
+      // Start a subscription that will wait (offset beyond tail)
+      const pullPromise = client.pull({ topic, offset: 3 }).next();
+
+      // Give some time for the subscription to be registered
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Truncate all messages (this should reject the pending subscription)
+      await client.truncate(topic, 5);
+
+      // Now publish more messages
+      await client.publish(topic, "message-2", "key-2");
+      await client.publish(topic, "message-3", "key-3");
+
+      // The pull should be rejected
+      expect((await pullPromise).value).toBe("message-3");
+    },
+  );
+
+  it.concurrent(
+    "Truncate more messages than available should truncate all",
+    { timeout: 20_000 },
+    async () => {
+      const topic = randomUUID();
+
+      const client = createPubsubClient({
+        ingressUrl: restateTestEnvironment.baseUrl(),
+        name: PUBSUB_OBJECT_NAME,
+      });
+
+      // Publish 3 messages
+      await client.publish(topic, "message-0", "key-0");
+      await client.publish(topic, "message-1", "key-1");
+      await client.publish(topic, "message-2", "key-2");
+
+      // Truncate more messages than available
+      await client.truncate(topic, 10);
+
+      // Try to pull from the tail (offset 3) should wait for new messages
+      const pullIterator = client.pull({ topic, offset: 3 });
+      const pullPromise = pullIterator.next();
+
+      // Publish a new message
+      await client.publish(topic, "new-message", "new-key");
+
+      // Should receive the new message
+      const result = await pullPromise;
+      expect(result.value).toBe("new-message");
+    },
+  );
 });
