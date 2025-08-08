@@ -23,64 +23,108 @@
  */
 import * as clients from "@restatedev/restate-sdk-clients";
 import type { PubsubApiV1 } from "@restatedev/pubsub-types";
-import type { CreatePubsubClientOptionsV1, PullOptions } from "./types.js";
+import type {
+  CreatePubsubClientOptionsV1,
+  PubsubClientV1,
+  PubsubClientOptionsV1,
+  PullOptions,
+} from "./types.js";
+
+/**
+ * Create pubsub client from existing ingress client
+ *
+ * @param client ingress client
+ * @param pubsubOptions pubsub options
+ */
+export function createPubsubClient(
+  client: clients.Ingress,
+  pubsubOptions: PubsubClientOptionsV1,
+): PubsubClientV1;
 
 /**
  * Creates a pubsub client for interacting with a pubsub service.
  *
  * @param pubsubOptions The options for creating the pubsub client.
  * @param pubsubOptions.name The name of the pubsub client.
- * @param pubsubOptions.ingressUrl The URL for the pubsub ingress.
+ * @param pubsubOptions.url The URL for the pubsub ingress.
  * @param pubsubOptions.headers Optional headers to include in requests.
  * @param pubsubOptions.pullInterval Optional interval for pulling messages.
  *                                  Defaults to 1 second if not provided.
  * @returns A pubsub client instance.
  */
-export function createPubsubClient(pubsubOptions: CreatePubsubClientOptionsV1) {
+export function createPubsubClient(
+  pubsubOptions: CreatePubsubClientOptionsV1,
+): PubsubClientV1;
+
+export function createPubsubClient(
+  firstArg: clients.Ingress | CreatePubsubClientOptionsV1,
+  secondArg?: PubsubClientOptionsV1,
+): PubsubClientV1 {
+  let ingressClient: clients.Ingress;
+  let options: PubsubClientOptionsV1;
+  if (secondArg) {
+    ingressClient = firstArg as clients.Ingress;
+    options = secondArg;
+  } else {
+    ingressClient = clients.connect(firstArg as CreatePubsubClientOptionsV1);
+    options = firstArg as CreatePubsubClientOptionsV1;
+  }
+
   return {
     /**
      * Pull messages from the pubsub topic.
-     * @param opts The options for pulling messages.
+     * @param pullOpts The options for pulling messages.
      * @returns A stream of messages.
      */
-    pull: (opts: PullOptions) => pullMessages(pubsubOptions, opts),
+    pull: (pullOpts: PullOptions) =>
+      pullMessages(ingressClient, options, pullOpts),
 
     /**
      * Create a Server-Sent Events (SSE) stream for the pubsub topic.
-     * @param opts The options for the SSE stream.
+     * @param pullOpts The options for the SSE stream.
      * @returns A ReadableStream that emits messages as SSE events.
      */
-    sse: (opts: PullOptions) => sse(pubsubOptions, opts),
+    sse: (pullOpts: PullOptions) => sse(ingressClient, options, pullOpts),
 
     /**
      * Publish a message to the pubsub topic.
      * @param topic The topic to publish to.
      * @param message The message to publish.
-     * @param idempotencyKey An optional idempotency key for the message.
+     * @param idempotencyKey An optional idempotency key for the publish operation.
      * @returns A promise that resolves when the message is published.
      */
     publish: (topic: string, message: unknown, idempotencyKey?: string) => {
-      const ingress = clients.connect({
-        url: pubsubOptions.ingressUrl,
-        headers: pubsubOptions.headers,
-      });
-      return ingress
-        .objectSendClient<PubsubApiV1>({ name: pubsubOptions.name }, topic)
+      return ingressClient
+        .objectSendClient<PubsubApiV1>({ name: options.name }, topic)
         .publish(message, clients.rpc.sendOpts({ idempotencyKey }));
+    },
+
+    /**
+     * Truncate messages from the head of the pubsub topic.
+     * @param topic The topic to truncate messages from.
+     * @param count The number of messages to remove from the head.
+     * @param idempotencyKey An optional idempotency key for the truncation operation.
+     * @returns A promise that resolves when the truncation is complete.
+     */
+    truncate: (topic: string, count: number, idempotencyKey?: string) => {
+      return ingressClient
+        .objectClient<PubsubApiV1>({ name: options.name }, topic)
+        .truncate(count, clients.rpc.opts({ idempotencyKey }));
     },
   };
 }
 
-export function sse(
-  pubsubOpts: CreatePubsubClientOptionsV1,
-  opts: PullOptions,
+function sse(
+  ingressClient: clients.Ingress,
+  pubsubOpts: PubsubClientOptionsV1,
+  pullOpts: PullOptions,
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
   return new ReadableStream({
     async start(controller) {
       try {
         controller.enqueue(encoder.encode(`event: ping\n`));
-        const content = pullMessages(pubsubOpts, opts);
+        const content = pullMessages(ingressClient, pubsubOpts, pullOpts);
         for await (const message of content) {
           const chunk = `data: ${JSON.stringify(message)}\n\n`;
           controller.enqueue(encoder.encode(chunk));
@@ -94,21 +138,18 @@ export function sse(
   });
 }
 
-export async function* pullMessages(
-  pubsubOptions: CreatePubsubClientOptionsV1,
-  opts: PullOptions,
+async function* pullMessages(
+  ingressClient: clients.Ingress,
+  pubsubOptions: PubsubClientOptionsV1,
+  pullOpts: PullOptions,
 ) {
-  const ingress = clients.connect({
-    url: pubsubOptions.ingressUrl,
-    headers: pubsubOptions.headers,
-  });
-  const signal = opts.signal;
+  const signal = pullOpts.signal;
   const delay = durationToMs(pubsubOptions.pullInterval ?? { seconds: 1 });
-  let offset = opts.offset ?? 0;
+  let offset = pullOpts.offset;
   while (!(signal?.aborted ?? false)) {
     try {
-      const { messages, nextOffset } = await ingress
-        .objectClient<PubsubApiV1>({ name: pubsubOptions.name }, opts.topic)
+      const { messages, nextOffset } = await ingressClient
+        .objectClient<PubsubApiV1>({ name: pubsubOptions.name }, pullOpts.topic)
         .pull({ offset }, clients.rpc.opts({ signal }));
       for (const message of messages) {
         yield message;

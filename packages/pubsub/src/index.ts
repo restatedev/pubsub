@@ -24,7 +24,6 @@
 export type {
   Subscription,
   Notification,
-  PubSubState,
   PubsubObjectOptions,
   PullResponse,
   PullRequest,

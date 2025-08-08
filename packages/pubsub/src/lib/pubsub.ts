@@ -25,15 +25,60 @@ import * as restate from "@restatedev/restate-sdk";
 import { serde } from "@restatedev/restate-sdk-zod";
 import {
   type PubsubApiV1,
-  type PubSubState,
   type Notification,
   type Subscription,
   PullRequest,
   PullResponse,
   type PubsubObjectOptions,
 } from "@restatedev/pubsub-types";
+import { RestatePromise, TerminalError } from "@restatedev/restate-sdk";
+
+type Metadata = {
+  head: number;
+  /// Excluded
+  tail: number;
+};
+
+export interface PubSubState {
+  messagesMetadata: Metadata;
+  subscription: Subscription[];
+  [key: Exclude<string, "messagesMetadata" | "subscription">]: unknown;
+}
 
 const handler = restate.handlers.object;
+
+function defaultMetadata(): Metadata {
+  return { head: 0, tail: 0 };
+}
+
+async function loadMessagesInRange(
+  ctx: restate.ObjectSharedContext<PubSubState>,
+  fromIncluded: number,
+  toExcluded: number,
+): Promise<unknown[]> {
+  if (fromIncluded == toExcluded) {
+    return [];
+  }
+
+  const promises = [];
+  for (let i = fromIncluded; i < toExcluded; i++) {
+    promises.push(
+      (ctx.get(`m_${i.toString()}`) as RestatePromise<unknown>).map(
+        (value, failure) => {
+          if (failure) {
+            throw failure;
+          }
+          if (value === undefined) {
+            throw new TerminalError("Value is unexpected to be undefined");
+          }
+          return value;
+        },
+      ),
+    );
+  }
+
+  return RestatePromise.all(promises);
+}
 
 /**
  * Create a pubsub object.
@@ -51,13 +96,39 @@ export function createPubsubObject<P extends string>(
     ctx: restate.ObjectSharedContext<PubSubState>,
     { offset }: PullRequest,
   ) => {
-    const messages = (await ctx.get("messages")) ?? [];
-    if (offset < messages.length) {
+    const metadata = (await ctx.get("messagesMetadata")) ?? defaultMetadata();
+
+    // If offset is not provided, always wait for new messages from the current tail
+    if (offset === undefined) {
+      const { id, promise } = ctx.awakeable<Notification>();
+      ctx
+        .objectSendClient<PubsubApiV1>({ name }, ctx.key)
+        .subscribe({ offset: metadata.tail, id });
+      const { newMessages, newOffset } = await promise.orTimeout(pullTimeout);
       return {
-        messages: messages.slice(offset),
-        nextOffset: messages.length,
+        messages: newMessages,
+        nextOffset: newOffset,
       };
     }
+
+    // Handle explicit offset
+    if (offset < metadata.head) {
+      // Offset before the head
+      throw new TerminalError(
+        `Offset ${offset.toString()} is lower than the head ${metadata.head.toString()}`,
+      );
+    }
+
+    if (offset < metadata.tail) {
+      // Load between offset and tail
+      const messages = await loadMessagesInRange(ctx, offset, metadata.tail);
+      return {
+        messages,
+        nextOffset: metadata.tail,
+      };
+    }
+
+    // Offset after the tail, need to wait for this one
     const { id, promise } = ctx.awakeable<Notification>();
     ctx
       .objectSendClient<PubsubApiV1>({ name }, ctx.key)
@@ -73,15 +144,20 @@ export function createPubsubObject<P extends string>(
     ctx: restate.ObjectContext<PubSubState>,
     message: unknown,
   ) => {
-    const messages = (await ctx.get("messages")) ?? [];
-    messages.push(message);
-    ctx.set("messages", messages);
+    // Write the new message
+    const metadata = (await ctx.get("messagesMetadata")) ?? defaultMetadata();
+    ctx.set(`m_${metadata.tail.toString()}`, message);
+    metadata.tail += 1;
+    ctx.set("messagesMetadata", metadata);
 
+    // Awake awaiting subscriptions
     const subscriptions = (await ctx.get("subscription")) ?? [];
     for (const { id, offset } of subscriptions) {
       const notification = {
-        newOffset: messages.length,
-        newMessages: messages.slice(offset),
+        newOffset: metadata.tail,
+        // Lil' implementation note here: if the get value is already loaded,
+        // this won't write a new message to the journal for the same get!
+        newMessages: await loadMessagesInRange(ctx, offset, metadata.tail),
       };
       ctx.resolveAwakeable(id, notification);
     }
@@ -92,18 +168,79 @@ export function createPubsubObject<P extends string>(
     ctx: restate.ObjectContext<PubSubState>,
     subscription: Subscription,
   ) => {
-    const messages = (await ctx.get("messages")) ?? [];
-    if (subscription.offset < messages.length) {
+    const metadata = (await ctx.get("messagesMetadata")) ?? defaultMetadata();
+
+    if (subscription.offset < metadata.head) {
+      // Offset before the head
+      ctx.rejectAwakeable(
+        subscription.id,
+        `Offset ${subscription.offset.toString()} is lower than the head ${metadata.head.toString()}`,
+      );
+      return;
+    }
+
+    if (subscription.offset < metadata.tail) {
+      // Subscription offset before the tail, let's return messages back
       const notification = {
-        newOffset: messages.length,
-        newMessages: messages.slice(subscription.offset),
+        newOffset: metadata.tail,
+        newMessages: await loadMessagesInRange(
+          ctx,
+          subscription.offset,
+          metadata.tail,
+        ),
       };
       ctx.resolveAwakeable(subscription.id, notification);
       return;
     }
+
+    // Subscription offset after the tail, time to remember this awakeable.
     const sub = (await ctx.get("subscription")) ?? [];
     sub.push(subscription);
     ctx.set("subscription", sub);
+  };
+
+  const truncate = async (
+    ctx: restate.ObjectContext<PubSubState>,
+    count: number,
+  ) => {
+    const metadata = await ctx.get("messagesMetadata");
+    if (!metadata) {
+      // Nothing to do, this pubsub object is empty
+      return;
+    }
+
+    // Calculate new head position
+    const newHead = Math.min(metadata.head + count, metadata.tail);
+
+    // Update metadata with new object
+    const newMetadata = { head: newHead, tail: metadata.tail };
+    ctx.set("messagesMetadata", newMetadata);
+
+    // Clear the truncated message keys from state
+    for (let i = metadata.head; i < newHead; i++) {
+      ctx.clear(`m_${i.toString()}`);
+    }
+
+    // Reject any pending subscriptions that are now below the new head
+    const subscriptions = (await ctx.get("subscription")) ?? [];
+    const validSubscriptions = [];
+
+    for (const subscription of subscriptions) {
+      if (subscription.offset < newHead) {
+        // Reject subscriptions that are now below the head
+        ctx.rejectAwakeable(
+          subscription.id,
+          `Offset ${subscription.offset.toString()} is lower than the head ${newHead.toString()}`,
+        );
+      } else {
+        validSubscriptions.push(subscription);
+      }
+    }
+
+    // Update subscriptions list with only valid ones
+    if (validSubscriptions.length !== subscriptions.length) {
+      ctx.set("subscription", validSubscriptions);
+    }
   };
 
   return restate.object({
@@ -119,7 +256,11 @@ export function createPubsubObject<P extends string>(
 
       publish,
       subscribe,
+      truncate,
     } satisfies PubsubApiV1,
+    options: {
+      enableLazyState: true,
+    },
   });
 }
 

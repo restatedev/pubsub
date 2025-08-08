@@ -12,13 +12,8 @@ export interface Notification {
   newMessages: any[];
 }
 
-export interface PubSubState {
-  messages: any[];
-  subscription: Subscription[];
-}
-
 export const PullRequest = z.object({
-  offset: z.number(),
+  offset: z.number().optional(),
 });
 
 export type PullRequest = z.infer<typeof PullRequest>;
@@ -34,6 +29,7 @@ export interface PubsubApiV1 {
   pull: (ctx: any, req: PullRequest) => Promise<PullResponse>;
   publish: (ctx: any, message: unknown) => Promise<void>;
   subscribe: (ctx: any, subscription: Subscription) => Promise<void>;
+  truncate: (ctx: any, count: number) => Promise<void>;
 }
 
 export type PubsubObjectOptions = {

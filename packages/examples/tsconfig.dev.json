@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@restatedev/pubsub": ["../pubsub/src/index.ts"],
+      "@restatedev/pubsub-client": ["../pubsub-client/src/index.ts"],
+      "@restatedev/pubsub-types": ["../types/src/index.ts"]
+    }
+  }
+}

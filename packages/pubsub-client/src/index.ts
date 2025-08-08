@@ -22,7 +22,12 @@
  *   SOFTWARE
  */
 export { createPubsubClient } from "./lib/pubsub_client.js";
-export type { CreatePubsubClientOptionsV1, PullOptions } from "./lib/types.js";
+export type {
+  CreatePubsubClientOptionsV1,
+  PullOptions,
+  PubsubClientOptionsV1,
+  PubsubClientV1,
+} from "./lib/types.js";
 export type {
   Subscription,
   PullResponse,
