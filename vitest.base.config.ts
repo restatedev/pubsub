@@ -16,6 +16,10 @@ export const baseConfig = defineConfig({
   ...(isWatch && {
     resolve: {
       alias: {
+        "@restatedev/pubsub-types": path.resolve(
+          __dirname,
+          "./packages/types/src/index.ts",
+        ),
         "@restatedev/pubsub": path.resolve(
           __dirname,
           "./packages/pubsub/src/index.ts",
@@ -29,6 +33,7 @@ export const baseConfig = defineConfig({
     },
     optimizeDeps: {
       exclude: [
+        "@restatedev/pubsub-types",
         "@restatedev/pubsub",
         "@restatedev/pubsub-client",
         "@restatedev/test",

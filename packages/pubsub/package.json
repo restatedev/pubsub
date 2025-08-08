@@ -22,14 +22,12 @@
     "access": "public"
   },
   "dependencies": {
-    "@restatedev/pubsub-types": "workspace:*"
-  },
-  "devDependencies": {},
-  "peerDependencies": {
+    "@restatedev/pubsub-types": "workspace:*",
     "@restatedev/restate-sdk": "catalog:",
     "@restatedev/restate-sdk-zod": "catalog:",
     "zod": "catalog:"
   },
+  "devDependencies": {},
   "files": [
     "dist",
     "package.json",
