@@ -12,18 +12,28 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { RestateTestEnvironment } from "@restatedev/restate-sdk-testcontainers";
 import { createPubsubObject } from "@restatedev/pubsub";
+import { connect, type Ingress } from "@restatedev/restate-sdk-clients";
 import { randomUUID } from "node:crypto";
-import { createPubsubClient } from "@restatedev/pubsub-client";
+import {
+  createPubsubClient,
+  type PubsubClientV1,
+} from "@restatedev/pubsub-client";
 
 const PUBSUB_OBJECT_NAME = "pubsub";
 
 describe("Pubsub", () => {
   let restateTestEnvironment: RestateTestEnvironment;
+  let ingressClient: Ingress;
+  let client: PubsubClientV1;
 
   // Deploy Restate and the Service endpoint once for all the tests in this suite
   beforeAll(async () => {
     restateTestEnvironment = await RestateTestEnvironment.start({
       services: [createPubsubObject(PUBSUB_OBJECT_NAME)],
+    });
+    ingressClient = connect({ url: restateTestEnvironment.baseUrl() });
+    client = createPubsubClient(ingressClient, {
+      name: PUBSUB_OBJECT_NAME,
     });
   }, 20_000);
 
@@ -38,11 +48,6 @@ describe("Pubsub", () => {
     async () => {
       const topic = randomUUID();
 
-      const client = createPubsubClient({
-        ingressUrl: restateTestEnvironment.baseUrl(),
-        name: PUBSUB_OBJECT_NAME,
-      });
-
       await client.publish(topic, "123", "123");
 
       expect((await client.pull({ topic, offset: 0 }).next()).value).toBe(
@@ -53,11 +58,6 @@ describe("Pubsub", () => {
 
   it.concurrent("Subscribe then push event", { timeout: 20_000 }, async () => {
     const topic = randomUUID();
-
-    const client = createPubsubClient({
-      ingressUrl: restateTestEnvironment.baseUrl(),
-      name: PUBSUB_OBJECT_NAME,
-    });
 
     const awaitNext = client.pull({ topic, offset: 0 }).next();
 
@@ -71,11 +71,6 @@ describe("Pubsub", () => {
     { timeout: 60_000 },
     async () => {
       const topic = randomUUID();
-
-      const client = createPubsubClient({
-        ingressUrl: restateTestEnvironment.baseUrl(),
-        name: PUBSUB_OBJECT_NAME,
-      });
 
       const eventCount = 100;
       const publishedMessages = new Set<string>();
@@ -133,11 +128,6 @@ describe("Pubsub", () => {
     async () => {
       const topic = randomUUID();
 
-      const client = createPubsubClient({
-        ingressUrl: restateTestEnvironment.baseUrl(),
-        name: PUBSUB_OBJECT_NAME,
-      });
-
       // Publish 5 messages
       await client.publish(topic, "message-0", "key-0");
       await client.publish(topic, "message-1", "key-1");
@@ -168,11 +158,6 @@ describe("Pubsub", () => {
     async () => {
       const topic = randomUUID();
 
-      const client = createPubsubClient({
-        ingressUrl: restateTestEnvironment.baseUrl(),
-        name: PUBSUB_OBJECT_NAME,
-      });
-
       // Publish 3 messages
       await client.publish(topic, "message-0", "key-0");
       await client.publish(topic, "message-1", "key-1");
@@ -194,11 +179,6 @@ describe("Pubsub", () => {
     { timeout: 20_000 },
     async () => {
       const topic = randomUUID();
-
-      const client = createPubsubClient({
-        ingressUrl: restateTestEnvironment.baseUrl(),
-        name: PUBSUB_OBJECT_NAME,
-      });
 
       // Publish 3 messages
       await client.publish(topic, "message-0", "key-0");
@@ -228,11 +208,6 @@ describe("Pubsub", () => {
     async () => {
       const topic = randomUUID();
 
-      const client = createPubsubClient({
-        ingressUrl: restateTestEnvironment.baseUrl(),
-        name: PUBSUB_OBJECT_NAME,
-      });
-
       // Publish 2 messages
       await client.publish(topic, "message-0", "key-0");
       await client.publish(topic, "message-1", "key-1");
@@ -261,11 +236,6 @@ describe("Pubsub", () => {
     async () => {
       const topic = randomUUID();
 
-      const client = createPubsubClient({
-        ingressUrl: restateTestEnvironment.baseUrl(),
-        name: PUBSUB_OBJECT_NAME,
-      });
-
       // Publish 3 messages
       await client.publish(topic, "message-0", "key-0");
       await client.publish(topic, "message-1", "key-1");
@@ -293,11 +263,6 @@ describe("Pubsub", () => {
     async () => {
       const topic = randomUUID();
 
-      const client = createPubsubClient({
-        ingressUrl: restateTestEnvironment.baseUrl(),
-        name: PUBSUB_OBJECT_NAME,
-      });
-
       // Publish some messages first
       await client.publish(topic, "old-message-1", "key-1");
       await client.publish(topic, "old-message-2", "key-2");
@@ -322,11 +287,6 @@ describe("Pubsub", () => {
     async () => {
       const topic = randomUUID();
 
-      const client = createPubsubClient({
-        ingressUrl: restateTestEnvironment.baseUrl(),
-        name: PUBSUB_OBJECT_NAME,
-      });
-
       // Start pulling without offset on empty topic
       const pullIterator = client.pull({ topic });
       const pullPromise = pullIterator.next();
@@ -345,11 +305,6 @@ describe("Pubsub", () => {
     { timeout: 20_000 },
     async () => {
       const topic = randomUUID();
-
-      const client = createPubsubClient({
-        ingressUrl: restateTestEnvironment.baseUrl(),
-        name: PUBSUB_OBJECT_NAME,
-      });
 
       // Publish some existing messages
       await client.publish(topic, "existing-1", "key-1");
