@@ -19,7 +19,7 @@ export const PullRequest = z.object({
 export type PullRequest = z.infer<typeof PullRequest>;
 
 export const PullResponse = z.object({
-  messages: z.any({}).array(),
+  messages: z.any().array(),
   nextOffset: z.number(),
 });
 
