@@ -1,5 +1,11 @@
 # @restatedev/pubsub
 
+## 0.3.1
+
+### Patch Changes
+
+- Relax zod version in peerdependencies
+
 ## 0.3.0
 
 ### Minor Changes
