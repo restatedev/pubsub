@@ -1,5 +1,11 @@
 # @restatedev/pubsub
 
+## 0.3.0
+
+### Minor Changes
+
+- 839b34a: Update zod
+
 ## 0.2.0
 
 ### Minor Changes
