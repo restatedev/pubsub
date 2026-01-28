@@ -123,7 +123,7 @@ function sse(
   return new ReadableStream({
     async start(controller) {
       try {
-        controller.enqueue(encoder.encode(`event: ping\n`));
+        controller.enqueue(encoder.encode(`event: ping\n\n`));
         const content = pullMessages(ingressClient, pubsubOpts, pullOpts);
         for await (const message of content) {
           const chunk = `data: ${JSON.stringify(message)}\n\n`;
