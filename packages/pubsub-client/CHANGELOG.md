@@ -1,5 +1,11 @@
 # @restatedev/pubsub-client
 
+## 0.3.2
+
+### Patch Changes
+
+- 6c8b13f: Fix bug ping events
+
 ## 0.3.1
 
 ### Patch Changes
