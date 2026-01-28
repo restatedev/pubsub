@@ -42,5 +42,9 @@
     "typescript-eslint": "^8.39.0",
     "vitest": "^3.2.4"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/restatedev/pubsub.git"
+  },
   "packageManager": "pnpm@10.13.1"
 }
